@@ -1,53 +1,545 @@
-  <!DOCTYPE html>
-  <html lang="en">
-  <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>E3CD45DF LLC</title>
-      <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body {
-              min-height: 100vh;
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
-              align-items: center;
-              background: #0a0a1a;
-              background-image:
-                  radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.8), transparent),
-                  radial-gradient(1px 1px at 30% 65%, rgba(255,255,255,0.6), transparent),
-                  radial-gradient(1px 1px at 50% 10%, rgba(255,255,255,0.7), transparent),
-                  radial-gradient(1px 1px at 70% 40%, rgba(255,255,255,0.5), transparent),
-                  radial-gradient(1px 1px at 90% 80%, rgba(255,255,255,0.6), transparent),
-                  radial-gradient(1px 1px at 15% 85%, rgba(255,255,255,0.4), transparent),
-                  radial-gradient(1px 1px at 45% 50%, rgba(255,255,255,0.7), transparent),
-                  radial-gradient(1px 1px at 80% 15%, rgba(255,255,255,0.5), transparent),
-                  radial-gradient(1.5px 1.5px at 25% 35%, rgba(180,200,255,0.9), transparent),
-                  radial-gradient(1.5px 1.5px at 60% 70%, rgba(180,200,255,0.8), transparent),
-                  radial-gradient(1.5px 1.5px at 85% 55%, rgba(200,180,255,0.7), transparent),
-                  radial-gradient(600px 600px at 20% 80%, rgba(20,0,60,0.4), transparent),
-                  radial-gradient(400px 400px at 80% 20%, rgba(0,20,60,0.3), transparent);
-              color: white;
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-              overflow: hidden;
-          }
-          h1 {
-              font-size: clamp(2rem, 6vw, 4rem);
-              font-weight: 300;
-              letter-spacing: 0.3em;
-              margin-bottom: 1.5rem;
-          }
-          p {
-              font-size: clamp(0.9rem, 2vw, 1.2rem);
-              font-weight: 300;
-              letter-spacing: 0.2em;
-              opacity: 0.6;
-              text-transform: uppercase;
-          }
-      </style>
-  </head>
-  <body>
-      <h1>E3CD45DF LLC</h1>
-      <p>Coming Soon</p>
-  </body>
-  </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E3CD45DF LLC</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #020108;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            overflow: hidden;
+        }
+        canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+        }
+        .content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+        }
+        h1 {
+            font-size: clamp(2rem, 6vw, 4rem);
+            font-weight: 300;
+            letter-spacing: 0.3em;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 0 80px rgba(120, 140, 255, 0.25), 0 0 200px rgba(80, 60, 180, 0.1);
+        }
+        p {
+            font-size: clamp(0.9rem, 2vw, 1.2rem);
+            font-weight: 300;
+            letter-spacing: 0.2em;
+            opacity: 0.5;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="space"></canvas>
+    <div class="content">
+        <h1>E3CD45DF LLC</h1>
+        <p>Coming Soon</p>
+    </div>
+    <script>
+        const canvas = document.getElementById('space');
+        const ctx = canvas.getContext('2d');
+        let W, H;
+
+        function resize() {
+            W = canvas.width = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener('resize', () => { resize(); initObjects(); });
+
+        // Color palettes inspired by JWST deep field
+        const starColors = [
+            [255, 255, 255],    // white
+            [255, 255, 240],    // warm white
+            [200, 220, 255],    // cool blue
+            [255, 200, 150],    // warm orange
+            [180, 200, 255],    // blue
+            [255, 180, 180],    // pink-red
+            [255, 240, 200],    // yellow
+            [220, 180, 255],    // lavender
+            [150, 200, 255],    // deep blue
+            [255, 160, 120],    // orange-red (JWST signature)
+        ];
+
+        let stars = [], brightStars = [], galaxies = [], nebulae = [], shootingStars = [];
+        let time = 0;
+
+        function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+        function rand(a, b) { return a + Math.random() * (b - a); }
+
+        function initObjects() {
+            // --- Dim background stars (dense field) ---
+            stars = [];
+            for (let i = 0; i < 1200; i++) {
+                const c = pick(starColors);
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: Math.random() * 1.0 + 0.2,
+                    color: c,
+                    baseAlpha: rand(0.15, 0.6),
+                    twinkleSpeed: rand(0.008, 0.03),
+                    twinkleAmp: rand(0.1, 0.35),
+                    phase: Math.random() * Math.PI * 2,
+                });
+            }
+
+            // --- Medium stars ---
+            for (let i = 0; i < 225; i++) {
+                const c = pick(starColors);
+                stars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: rand(1.0, 2.0),
+                    color: c,
+                    baseAlpha: rand(0.4, 0.8),
+                    twinkleSpeed: rand(0.01, 0.025),
+                    twinkleAmp: rand(0.15, 0.3),
+                    phase: Math.random() * Math.PI * 2,
+                });
+            }
+
+            // --- Bright stars (varied: no spikes, 2-spike, 4-spike, 6-spike JWST) ---
+            brightStars = [];
+            for (let i = 0; i < 38; i++) {
+                const c = pick(starColors);
+                // Distribute: ~8 no spikes, ~7 two-spike, ~5 four-spike, ~5 six-spike
+                const roll = Math.random();
+                const spikeCount = roll < 0.32 ? 0 : roll < 0.6 ? 2 : roll < 0.8 ? 4 : 6;
+                brightStars.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    r: rand(2, 4),
+                    color: c,
+                    baseAlpha: rand(0.7, 1.0),
+                    twinkleSpeed: rand(0.008, 0.02),
+                    twinkleAmp: rand(0.1, 0.25),
+                    phase: Math.random() * Math.PI * 2,
+                    spikeCount: spikeCount,
+                    spikeLen: spikeCount > 0 ? rand(6, spikeCount === 6 ? 25 : 15) : 0,
+                    spikeAngle: Math.random() * Math.PI,
+                });
+            }
+
+            // --- Galaxies (30+, various types) ---
+            galaxies = [];
+            // Spiral galaxies — power law sizes (many tiny, few large)
+            for (let i = 0; i < 36; i++) {
+                // Power law: size = min * (max/min)^uniform → heavy small tail
+                const u = Math.random();
+                const size = 4 * Math.pow(360 / 4, u * u);  // squaring u biases toward small
+                galaxies.push({
+                    type: 'spiral',
+                    x: Math.random() * W, y: Math.random() * H,
+                    size: size,
+                    angle: Math.random() * Math.PI * 2,
+                    tilt: rand(0.2, 0.9),
+                    arms: Math.floor(rand(2, 4)),
+                    color: pick([[160, 120, 255], [130, 100, 240], [180, 140, 255], [200, 100, 180], [255, 80, 120], [100, 140, 255], [180, 80, 200], [220, 100, 140], [140, 160, 255], [200, 130, 255]]),
+                    coreColor: pick([[220, 200, 255], [255, 200, 230], [200, 180, 255], [255, 180, 200]]),
+                    alpha: size > 30 ? rand(0.25, 0.55) : rand(0.12, 0.4),
+                    spin: rand(-0.0001, 0.0001),
+                    drift: { x: rand(-0.02, 0.02), y: rand(-0.02, 0.02) },
+                });
+            }
+            // Elliptical galaxies
+            for (let i = 0; i < 20; i++) {
+                galaxies.push({
+                    type: 'elliptical',
+                    x: Math.random() * W, y: Math.random() * H,
+                    size: rand(5, 25),
+                    angle: Math.random() * Math.PI,
+                    eccentricity: rand(0.3, 0.9),
+                    color: pick([[255, 200, 150], [255, 180, 130], [220, 190, 255], [200, 180, 160]]),
+                    alpha: rand(0.1, 0.4),
+                    drift: { x: rand(-0.015, 0.015), y: rand(-0.015, 0.015) },
+                });
+            }
+            // Edge-on galaxies (thin discs)
+            for (let i = 0; i < 16; i++) {
+                galaxies.push({
+                    type: 'edge-on',
+                    x: Math.random() * W, y: Math.random() * H,
+                    size: rand(12, 40),
+                    angle: Math.random() * Math.PI,
+                    color: pick([[255, 190, 140], [200, 180, 255], [180, 200, 240]]),
+                    coreColor: [255, 240, 200],
+                    alpha: rand(0.15, 0.45),
+                    thickness: rand(0.08, 0.2),
+                    drift: { x: rand(-0.015, 0.015), y: rand(-0.015, 0.015) },
+                });
+            }
+            // Tiny distant galaxies (dots with slight elongation)
+            for (let i = 0; i < 40; i++) {
+                galaxies.push({
+                    type: 'distant',
+                    x: Math.random() * W, y: Math.random() * H,
+                    size: rand(2, 6),
+                    angle: Math.random() * Math.PI,
+                    color: pick([[255, 150, 100], [255, 180, 130], [200, 160, 255], [180, 200, 255], [255, 120, 80]]),
+                    alpha: rand(0.15, 0.5),
+                    eccentricity: rand(0.3, 0.8),
+                    drift: { x: rand(-0.01, 0.01), y: rand(-0.01, 0.01) },
+                });
+            }
+
+            // --- Nebulae (varied sizes: huge, medium, small, tiny) ---
+            nebulae = [
+                // HUGE: Carina-style emission nebula — dominates bottom half
+                {
+                    layers: [
+                        { x: 0.25, y: 0.72, rx: 700, ry: 450, r: 80, g: 25, b: 15, a: 0.04 },
+                        { x: 0.22, y: 0.70, rx: 500, ry: 320, r: 140, g: 50, b: 25, a: 0.045 },
+                        { x: 0.28, y: 0.68, rx: 350, ry: 200, r: 200, g: 80, b: 40, a: 0.04 },
+                        { x: 0.24, y: 0.71, rx: 200, ry: 120, r: 240, g: 130, b: 70, a: 0.03 },
+                        { x: 0.20, y: 0.65, rx: 100, ry: 60, r: 255, g: 170, b: 100, a: 0.025 },
+                        // Dark dust lane cutting across
+                        { x: 0.25, y: 0.74, rx: 550, ry: 50, r: 5, g: 3, b: 10, a: 0.07 },
+                        // Secondary dust wisp
+                        { x: 0.18, y: 0.67, rx: 300, ry: 35, r: 5, g: 3, b: 8, a: 0.05 },
+                    ],
+                    phase: 0,
+                },
+                // MEDIUM: Blue-purple reflection nebula — upper right
+                {
+                    layers: [
+                        { x: 0.78, y: 0.22, rx: 280, ry: 240, r: 30, g: 20, b: 100, a: 0.05 },
+                        { x: 0.80, y: 0.20, rx: 180, ry: 150, r: 55, g: 40, b: 160, a: 0.045 },
+                        { x: 0.77, y: 0.24, rx: 100, ry: 80, r: 90, g: 70, b: 200, a: 0.035 },
+                        { x: 0.79, y: 0.21, rx: 45, ry: 35, r: 130, g: 110, b: 230, a: 0.025 },
+                    ],
+                    phase: 1.5,
+                },
+            ];
+        }
+
+        initObjects();
+
+        // --- Drawing functions ---
+
+        function drawNebulae() {
+            for (const neb of nebulae) {
+                for (const layer of neb.layers) {
+                    const cx = layer.x * W + Math.sin(time * 0.0002 + neb.phase) * 20;
+                    const cy = layer.y * H + Math.cos(time * 0.00025 + neb.phase + 1) * 15;
+                    const pulse = 1 + Math.sin(time * 0.0003 + neb.phase) * 0.05;
+                    const rx = layer.rx * pulse;
+                    const ry = layer.ry * pulse;
+
+                    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(rx, ry));
+                    grad.addColorStop(0, `rgba(${layer.r}, ${layer.g}, ${layer.b}, ${layer.a})`);
+                    grad.addColorStop(0.3, `rgba(${layer.r}, ${layer.g}, ${layer.b}, ${layer.a * 0.6})`);
+                    grad.addColorStop(0.6, `rgba(${layer.r}, ${layer.g}, ${layer.b}, ${layer.a * 0.25})`);
+                    grad.addColorStop(1, 'transparent');
+
+                    ctx.save();
+                    ctx.translate(cx, cy);
+                    ctx.scale(1, ry / rx);
+                    ctx.translate(-cx, -cy);
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, rx, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+        }
+
+        // Atmospheric scintillation — layered noise instead of pure sine
+        function scintillate(s, t) {
+            return s.baseAlpha
+                + Math.sin(t * s.twinkleSpeed + s.phase) * s.twinkleAmp * 1.2
+                + Math.sin(t * s.twinkleSpeed * 2.7 + s.phase * 3.1) * s.twinkleAmp * 0.48
+                + Math.sin(t * s.twinkleSpeed * 7.3 + s.phase * 0.7) * s.twinkleAmp * 0.18
+                + Math.sin(t * s.twinkleSpeed * 6.4 + s.phase * 11.3) * s.twinkleAmp * 0.75;
+        }
+
+        function drawStars() {
+            for (const s of stars) {
+                const alpha = Math.max(0.03, Math.min(1, scintillate(s, time)));
+                const [r, g, b] = s.color;
+                ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawBrightStars() {
+            for (const s of brightStars) {
+                const flicker = scintillate(s, time);
+                const alpha = Math.max(0.3, Math.min(1, flicker));
+                // Glow radius jitters with scintillation
+                const glowJitter = 1 + (flicker - s.baseAlpha) * 0.5;
+                const [r, g, b] = s.color;
+
+                // Outer glow (size breathes with twinkle)
+                const glowR = s.r * 6 * Math.max(0.7, glowJitter);
+                const grad = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, glowR);
+                grad.addColorStop(0, `rgba(${r},${g},${b},${alpha * 0.6})`);
+                grad.addColorStop(0.3, `rgba(${r},${g},${b},${alpha * 0.15})`);
+                grad.addColorStop(1, 'transparent');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, glowR, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Diffraction spikes (varied per star, lengths jitter independently)
+                if (s.spikeCount > 0) {
+                    ctx.strokeStyle = `rgba(${r},${g},${b},${alpha * 0.35})`;
+                    ctx.lineWidth = s.spikeCount === 2 ? 0.6 : 0.8;
+                    const step = Math.PI / (s.spikeCount === 2 ? 1 : s.spikeCount / 2);
+                    for (let i = 0; i < s.spikeCount / 2; i++) {
+                        const angle = s.spikeAngle + i * step;
+                        // Each spike gets its own jitter
+                        const spikeFlicker = 0.7 + Math.sin(time * 0.013 + s.phase * (i + 1) * 2.3) * 0.2
+                            + Math.sin(time * 0.031 + s.phase * (i + 1) * 5.7) * 0.1;
+                        const len = s.spikeLen * spikeFlicker;
+                        ctx.beginPath();
+                        ctx.moveTo(s.x - Math.cos(angle) * len, s.y - Math.sin(angle) * len);
+                        ctx.lineTo(s.x + Math.cos(angle) * len, s.y + Math.sin(angle) * len);
+                        ctx.stroke();
+                    }
+                }
+
+                // Core
+                ctx.fillStyle = `rgba(${Math.min(255, r+40)},${Math.min(255, g+40)},${Math.min(255, b+20)},${alpha})`;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawSpiralGalaxy(g) {
+            const a = g.alpha + Math.sin(time * 0.001 + g.x) * 0.05;
+            const [r, gc2, b] = g.color;
+            const [cr, cg, cb] = g.coreColor;
+            const angle = g.angle + time * g.spin;
+
+            ctx.save();
+            ctx.translate(g.x, g.y);
+            ctx.rotate(angle);
+            ctx.scale(1, g.tilt);
+
+            // Core glow
+            const coreGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, g.size * 0.4);
+            coreGrad.addColorStop(0, `rgba(${cr},${cg},${cb},${a * 0.8})`);
+            coreGrad.addColorStop(0.5, `rgba(${cr},${cg},${cb},${a * 0.3})`);
+            coreGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = coreGrad;
+            ctx.beginPath();
+            ctx.arc(0, 0, g.size * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Spiral arms
+            ctx.globalAlpha = a * 0.6;
+            for (let arm = 0; arm < g.arms; arm++) {
+                const armOffset = (arm / g.arms) * Math.PI * 2;
+                for (let t = 0; t < 60; t++) {
+                    const theta = t * 0.15 + armOffset;
+                    const radius = t * g.size * 0.015 + 2;
+                    const px = Math.cos(theta) * radius;
+                    const py = Math.sin(theta) * radius;
+                    const dotSize = Math.max(0.3, (1 - t / 60) * 1.5);
+                    const dotAlpha = (1 - t / 60) * 0.8;
+                    ctx.fillStyle = `rgba(${r},${gc2},${b},${dotAlpha})`;
+                    ctx.beginPath();
+                    ctx.arc(px, py, dotSize, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            ctx.globalAlpha = 1;
+
+            // Outer halo
+            const haloGrad = ctx.createRadialGradient(0, 0, g.size * 0.3, 0, 0, g.size);
+            haloGrad.addColorStop(0, `rgba(${r},${gc2},${b},${a * 0.15})`);
+            haloGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = haloGrad;
+            ctx.beginPath();
+            ctx.arc(0, 0, g.size, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function drawEllipticalGalaxy(g) {
+            const a = g.alpha + Math.sin(time * 0.001 + g.y) * 0.04;
+            const [r, gc2, b] = g.color;
+
+            ctx.save();
+            ctx.translate(g.x, g.y);
+            ctx.rotate(g.angle);
+
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, g.size);
+            grad.addColorStop(0, `rgba(${r},${gc2},${b},${a * 0.7})`);
+            grad.addColorStop(0.3, `rgba(${r},${gc2},${b},${a * 0.35})`);
+            grad.addColorStop(0.7, `rgba(${r},${gc2},${b},${a * 0.1})`);
+            grad.addColorStop(1, 'transparent');
+
+            ctx.scale(1, g.eccentricity);
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(0, 0, g.size, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function drawEdgeOnGalaxy(g) {
+            const a = g.alpha + Math.sin(time * 0.001 + g.x + g.y) * 0.04;
+            const [r, gc2, b] = g.color;
+            const [cr, cg, cb] = g.coreColor;
+
+            ctx.save();
+            ctx.translate(g.x, g.y);
+            ctx.rotate(g.angle);
+
+            // Disc
+            ctx.scale(1, g.thickness);
+            const discGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, g.size);
+            discGrad.addColorStop(0, `rgba(${cr},${cg},${cb},${a * 0.7})`);
+            discGrad.addColorStop(0.2, `rgba(${r},${gc2},${b},${a * 0.5})`);
+            discGrad.addColorStop(0.6, `rgba(${r},${gc2},${b},${a * 0.2})`);
+            discGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = discGrad;
+            ctx.beginPath();
+            ctx.arc(0, 0, g.size, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Dark dust lane through center
+            ctx.fillStyle = `rgba(5, 3, 10, ${a * 0.4})`;
+            ctx.fillRect(-g.size, -0.8, g.size * 2, 1.6);
+
+            ctx.restore();
+        }
+
+        function drawDistantGalaxy(g) {
+            const a = g.alpha + Math.sin(time * 0.0015 + g.x * g.y) * 0.06;
+            const [r, gc2, b] = g.color;
+
+            ctx.save();
+            ctx.translate(g.x, g.y);
+            ctx.rotate(g.angle);
+            ctx.scale(1, g.eccentricity);
+
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, g.size);
+            grad.addColorStop(0, `rgba(${r},${gc2},${b},${a})`);
+            grad.addColorStop(0.5, `rgba(${r},${gc2},${b},${a * 0.3})`);
+            grad.addColorStop(1, 'transparent');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(0, 0, g.size, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function drawGalaxies() {
+            for (const g of galaxies) {
+                // Slow drift
+                g.x += g.drift.x;
+                g.y += g.drift.y;
+                // Wrap around
+                if (g.x < -50) g.x = W + 50;
+                if (g.x > W + 50) g.x = -50;
+                if (g.y < -50) g.y = H + 50;
+                if (g.y > H + 50) g.y = -50;
+
+                if (g.type === 'spiral') drawSpiralGalaxy(g);
+                else if (g.type === 'elliptical') drawEllipticalGalaxy(g);
+                else if (g.type === 'edge-on') drawEdgeOnGalaxy(g);
+                else if (g.type === 'distant') drawDistantGalaxy(g);
+            }
+        }
+
+        // Shooting stars
+        function maybeSpawnShootingStar() {
+            if (Math.random() < 0.002 && shootingStars.length < 2) {
+                shootingStars.push({
+                    x: Math.random() * W * 0.8,
+                    y: Math.random() * H * 0.4,
+                    len: rand(60, 120),
+                    speed: rand(5, 10),
+                    angle: Math.PI / 4 + (Math.random() - 0.5) * 0.4,
+                    life: 1.0,
+                    decay: rand(0.008, 0.015),
+                    width: rand(1, 2.5),
+                });
+            }
+        }
+
+        function drawShootingStars() {
+            for (let i = shootingStars.length - 1; i >= 0; i--) {
+                const s = shootingStars[i];
+                const endX = s.x + Math.cos(s.angle) * s.len;
+                const endY = s.y + Math.sin(s.angle) * s.len;
+
+                // Bright head
+                const headGrad = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, 4);
+                headGrad.addColorStop(0, `rgba(255, 255, 255, ${s.life})`);
+                headGrad.addColorStop(1, 'transparent');
+                ctx.fillStyle = headGrad;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Trail
+                const grad = ctx.createLinearGradient(s.x, s.y, endX, endY);
+                grad.addColorStop(0, `rgba(200, 220, 255, ${s.life * 0.8})`);
+                grad.addColorStop(0.3, `rgba(150, 180, 255, ${s.life * 0.4})`);
+                grad.addColorStop(1, 'transparent');
+                ctx.strokeStyle = grad;
+                ctx.lineWidth = s.width;
+                ctx.beginPath();
+                ctx.moveTo(s.x, s.y);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+
+                s.x += Math.cos(s.angle) * s.speed;
+                s.y += Math.sin(s.angle) * s.speed;
+                s.life -= s.decay;
+
+                if (s.life <= 0 || s.x > W + 50 || s.y > H + 50) {
+                    shootingStars.splice(i, 1);
+                }
+            }
+        }
+
+        // --- Main loop ---
+        function animate() {
+            time++;
+            ctx.clearRect(0, 0, W, H);
+
+            // Background gradient (very subtle warmth at edges like JWST deep fields)
+            const bgGrad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, Math.max(W, H) * 0.7);
+            bgGrad.addColorStop(0, '#050510');
+            bgGrad.addColorStop(1, '#020108');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, W, H);
+
+            drawNebulae();
+            drawStars();
+            drawGalaxies();
+            drawBrightStars();
+            maybeSpawnShootingStar();
+            drawShootingStars();
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
